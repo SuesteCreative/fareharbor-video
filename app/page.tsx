@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { translations, type Lang } from "./translations";
 import { EU_COUNTRIES, getExemptions } from "./eu-data";
 
@@ -11,6 +11,22 @@ type Country = "pt" | "es";
 type SoftwareId = "invoicexpress" | "moloni" | "billin" | "holded";
 type Step = "initial" | "configure" | "parameters" | "dashboard";
 type VatEntry = { code: string; vatRate: number };
+
+type IntegrationConfig = {
+  id: string;
+  fhShortName: string;
+  fhApiKey: string;
+  billCountry: Country;
+  billSoftware: SoftwareId;
+  billCompany: string;
+  billApiKey: string;
+  invoiceType: string;
+  vatEntries: VatEntry[];
+  intlTax: boolean;
+  exemptReason: string;
+  ossEnabled: boolean;
+  autoFinalize: string;
+};
 
 const BILLING_SOFTWARE: Record<Country, { id: SoftwareId; name: string; logo: string }[]> = {
   pt: [
@@ -41,7 +57,8 @@ function useFieldValidation() {
     setTimeout(() => setState(v.length >= 6 ? "valid" : "invalid"), 850);
   };
   const reset = () => setState("idle");
-  return { state, validate, reset };
+  const forceValid = () => setState("valid");
+  return { state, validate, reset, forceValid };
 }
 
 function inputCls(state: ValidationState, disabled?: boolean) {
@@ -253,24 +270,82 @@ function VatCountriesList({ entries, onAdd, onRemove, onChangeRate, lang, t }: {
 
 // ─── Lang selector ────────────────────────────────────────────────────────────
 
-const FLAG: Record<Lang, string>  = { pt: "🇵🇹", en: "🇬🇧", es: "🇪🇸" };
-const LABEL: Record<Lang, string> = { pt: "PT",   en: "EN",   es: "ES"   };
+const LANG_LABEL: Record<Lang, string> = { pt: "PT", en: "EN", es: "ES" };
+
+function FlagPT() {
+  return (
+    <svg width="20" height="14" viewBox="0 0 20 14" className="rounded-[1px] shrink-0">
+      <rect width="8" height="14" fill="#006600"/>
+      <rect x="8" width="12" height="14" fill="#D52B1E"/>
+      <circle cx="8" cy="7" r="3" fill="#FFD700" opacity="0.9"/>
+      <circle cx="8" cy="7" r="2.1" fill="#006600"/>
+      <circle cx="8" cy="7" r="1.2" fill="#FFD700" opacity="0.8"/>
+    </svg>
+  );
+}
+
+function FlagGB() {
+  return (
+    <svg width="20" height="14" viewBox="0 0 60 30" className="rounded-[1px] shrink-0">
+      <rect width="60" height="30" fill="#012169"/>
+      <path d="M0,0 L60,30 M60,0 L0,30" stroke="white" strokeWidth="6"/>
+      <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" strokeWidth="4"/>
+      <path d="M30,0 V30 M0,15 H60" stroke="white" strokeWidth="10"/>
+      <path d="M30,0 V30 M0,15 H60" stroke="#C8102E" strokeWidth="6"/>
+    </svg>
+  );
+}
+
+function FlagES() {
+  return (
+    <svg width="20" height="14" viewBox="0 0 3 2" className="rounded-[1px] shrink-0">
+      <rect width="3" height="2" fill="#c60b1e"/>
+      <rect y="0.5" width="3" height="1" fill="#ffc400"/>
+    </svg>
+  );
+}
+
+const LANG_FLAG: Record<Lang, React.ReactNode> = {
+  pt: <FlagPT />,
+  en: <FlagGB />,
+  es: <FlagES />,
+};
 
 function LangSelector({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => void }) {
   const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
   return (
-    <div className="relative z-50">
-      <button onClick={() => setOpen(!open)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08] hover:border-white/[0.16] transition-all text-sm text-white/60 hover:text-white font-dm">
-        <span className="text-base leading-none">{FLAG[lang]}</span>
-        <span className="font-medium tracking-wide">{LABEL[lang]}</span>
+    <div ref={ref} className="relative z-[60]">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08] hover:border-white/[0.16] transition-all text-sm text-white/60 hover:text-white font-dm"
+      >
+        {LANG_FLAG[lang]}
+        <span className="font-medium tracking-wide">{LANG_LABEL[lang]}</span>
         <ChevronDown className={`transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
         <div className="absolute right-0 mt-1.5 w-28 bg-[#0e1220] border border-white/[0.1] rounded-xl shadow-2xl overflow-hidden">
           {(["pt", "en", "es"] as Lang[]).map(l => (
-            <button key={l} onClick={() => { onChange(l); setOpen(false); }}
-              className={`flex items-center gap-2.5 w-full px-3.5 py-2.5 text-sm font-dm transition-colors ${lang === l ? "bg-blue-600/15 text-white" : "text-white/50 hover:bg-white/[0.04] hover:text-white"}`}>
-              <span>{FLAG[l]}</span><span className="font-medium">{LABEL[l]}</span>
+            <button
+              key={l}
+              type="button"
+              onMouseDown={(e) => { e.preventDefault(); onChange(l); setOpen(false); }}
+              className={`flex items-center gap-2.5 w-full px-3.5 py-2.5 text-sm font-dm transition-colors ${lang === l ? "bg-blue-600/15 text-white" : "text-white/50 hover:bg-white/[0.04] hover:text-white"}`}
+            >
+              {LANG_FLAG[l]}
+              <span className="font-medium">{LANG_LABEL[l]}</span>
             </button>
           ))}
         </div>
@@ -445,9 +520,11 @@ function IntegrationCard({ fhShortName, software, invoiceType, vatEntries, ossEn
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
-  const [lang, setLang] = useState<Lang>("pt");
+  const [lang, setLang] = useState<Lang>("en");
   const [step, setStep] = useState<Step>("initial");
   const [isEditing, setIsEditing] = useState(false);
+  const [integrations, setIntegrations] = useState<IntegrationConfig[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const t = translations[lang];
 
   // FareHarbor
@@ -481,14 +558,54 @@ export default function Dashboard() {
   const fhValid   = fhShortNameV.state === "valid" && fhApiKeyV.state === "valid";
   const billValid = billCountry !== "" && billSoftware !== "" && billCompanyV.state === "valid" && billApiKeyV.state === "valid";
   const canContinue = fhValid && billValid;
-  const canFinish   = invoiceType !== "" && vatEntries.length > 0 && autoFinalize !== "";
+  const canFinish   = invoiceType !== "" && autoFinalize !== "";
 
-  const handleFinish = () => { setStep("dashboard"); setIsEditing(false); };
-  const handleEdit   = () => { setIsEditing(true); setStep("configure"); };
-  const handleBackToDash = () => { setStep("dashboard"); setIsEditing(false); };
+  const handleFinish = () => {
+    const cfg: IntegrationConfig = {
+      id: editingId ?? Date.now().toString(),
+      fhShortName, fhApiKey, billCountry: billCountry as Country,
+      billSoftware: billSoftware as SoftwareId, billCompany, billApiKey,
+      invoiceType, vatEntries, intlTax, exemptReason, ossEnabled, autoFinalize,
+    };
+    setIntegrations(prev =>
+      editingId ? prev.map(i => i.id === cfg.id ? cfg : i) : [...prev, cfg]
+    );
+    setEditingId(null);
+    setStep("dashboard");
+    setIsEditing(false);
+  };
+
+  const handleEditIntegration = (id: string) => {
+    const cfg = integrations.find(i => i.id === id);
+    if (!cfg) return;
+    setFhShortName(cfg.fhShortName); fhShortNameV.forceValid();
+    setFhApiKey(cfg.fhApiKey);       fhApiKeyV.forceValid();
+    setBillCountry(cfg.billCountry); setBillSoftware(cfg.billSoftware);
+    setBillCompany(cfg.billCompany); billCompanyV.forceValid();
+    setBillApiKey(cfg.billApiKey);   billApiKeyV.forceValid();
+    setInvoiceType(cfg.invoiceType); setVatEntries(cfg.vatEntries);
+    setIntlTax(cfg.intlTax);         setExemptReason(cfg.exemptReason);
+    setOssEnabled(cfg.ossEnabled);   setAutoFinalize(cfg.autoFinalize);
+    setEditingId(id);
+    setIsEditing(true);
+    setStep("configure");
+  };
+
+  const handleNewIntegration = () => {
+    setFhShortName(""); setFhApiKey(""); fhShortNameV.reset(); fhApiKeyV.reset();
+    setBillCountry(""); setBillSoftware(""); setBillCompany(""); setBillApiKey("");
+    billCompanyV.reset(); billApiKeyV.reset();
+    setInvoiceType(""); setVatEntries([]); setIntlTax(false);
+    setExemptReason(""); setOssEnabled(false); setAutoFinalize("");
+    setEditingId(null); setIsEditing(false);
+    setStep("configure");
+  };
+
+  const handleBackToDash = () => { setStep("dashboard"); setIsEditing(false); setEditingId(null); };
 
   const handleReset = () => {
-    setStep("initial"); setIsEditing(false);
+    setStep("initial"); setIsEditing(false); setEditingId(null);
+    setIntegrations([]);
     setFhShortName(""); setFhApiKey(""); fhShortNameV.reset(); fhApiKeyV.reset();
     setBillCountry(""); setBillSoftware(""); setBillCompany(""); setBillApiKey("");
     billCompanyV.reset(); billApiKeyV.reset();
@@ -508,19 +625,19 @@ export default function Dashboard() {
 
       {/* ── Header ── */}
       <header className="relative z-10 flex items-center justify-between px-8 py-4 border-b border-white/[0.06]">
-        {/* Brand: Kapta above + Integration Hub below */}
-        <div className="flex flex-col gap-0.5">
-          <a href="https://kapta.pt/" target="_blank" rel="noopener noreferrer" className="group w-fit">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-kapta-white.png" alt="Kapta" className="h-4 w-auto object-contain opacity-55 group-hover:opacity-90 transition-all duration-200 group-hover:scale-105 origin-left" />
-          </a>
-          <div className="flex items-center gap-1.5">
-            <div className="w-5 h-5 rounded-md bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-sm shadow-blue-600/30">
-              <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-              </svg>
-            </div>
-            <span className="font-syne font-600 text-white/75 text-[13px] tracking-tight">Integration Hub</span>
+        {/* Brand: icon left + Kapta / Integration Hub stacked right */}
+        <div className="flex items-center gap-2.5">
+          <div className="w-[30px] h-[30px] rounded-md bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-sm shadow-blue-600/30 shrink-0">
+            <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <a href="https://kapta.pt/" target="_blank" rel="noopener noreferrer" className="group w-fit">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-kapta-white.png" alt="Kapta" className="h-[15px] w-auto object-contain opacity-55 group-hover:opacity-90 transition-all duration-200" />
+            </a>
+            <span className="font-syne font-600 text-white/60 text-[12px] tracking-tight leading-none">Integration Hub</span>
           </div>
         </div>
 
@@ -538,7 +655,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-3 items-center w-full max-w-sm">
               <div className="flex flex-col items-center gap-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/fareharbor-logo.svg" alt="FareHarbor" className="h-16 w-16 object-contain" style={{ filter: "brightness(0) invert(1) opacity(0.88)" }} />
+                <img src="/fareharbor-logo.svg" alt="FareHarbor" className="h-24 w-24 object-contain" style={{ filter: "brightness(0) invert(1) opacity(0.88)" }} />
                 <span className="text-[10px] text-white/30 font-dm uppercase tracking-widest">FareHarbor</span>
               </div>
               <div className="flex justify-center">
@@ -735,8 +852,8 @@ export default function Dashboard() {
             )}
 
             <div className="flex items-center justify-between">
-              <button onClick={isEditing ? handleBackToDash : handleReset} className="text-sm text-white/25 hover:text-white/55 transition-colors font-dm">
-                {isEditing ? t.backToDashboard : t.restart}
+              <button onClick={isEditing || integrations.length > 0 ? handleBackToDash : handleReset} className="text-sm text-white/25 hover:text-white/55 transition-colors font-dm">
+                {isEditing || integrations.length > 0 ? t.backToDashboard : t.restart}
               </button>
               {step === "configure" && (
                 <button onClick={() => setStep("parameters")} disabled={!canContinue}
@@ -762,43 +879,32 @@ export default function Dashboard() {
                 <h1 className="font-syne font-700 text-2xl text-white tracking-tight">{t.myIntegrations}</h1>
                 <p className="text-white/35 text-sm font-dm mt-1">{t.doneSubtitle}</p>
               </div>
-              <button onClick={handleReset} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white/40 hover:text-white hover:border-white/20 hover:bg-white/[0.06] transition-all text-sm font-dm">
+              <button onClick={handleNewIntegration} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white/40 hover:text-white hover:border-white/20 hover:bg-white/[0.06] transition-all text-sm font-dm">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
-                {t.addIntegration}
+                {t.newIntegration}
               </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-              {/* Active integration */}
-              <div className="lg:col-span-2">
-                <IntegrationCard
-                  fhShortName={fhShortName}
-                  software={selectedSoftware}
-                  invoiceType={invoiceType}
-                  vatEntries={vatEntries}
-                  ossEnabled={ossEnabled}
-                  autoFinalize={autoFinalize}
-                  intlTax={intlTax}
-                  onEdit={handleEdit}
-                  t={t}
-                  lang={lang}
-                />
-              </div>
-
-              {/* Placeholder cards */}
-              <div className="flex flex-col gap-5">
-                {[1, 2].map(i => (
-                  <div key={i} className="rounded-2xl border border-dashed border-white/[0.07] bg-white/[0.01] p-6 flex flex-col items-center justify-center gap-3 min-h-[130px]">
-                    <div className="w-10 h-10 rounded-xl border border-dashed border-white/[0.1] flex items-center justify-center text-white/20">
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-white/20 text-xs font-dm font-medium">{t.addIntegration}</p>
-                      <p className="text-white/12 text-[11px] font-dm mt-0.5">{t.comingSoonLabel}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              {integrations.map(cfg => {
+                const swOpts = BILLING_SOFTWARE[cfg.billCountry] || [];
+                const sw = swOpts.find(s => s.id === cfg.billSoftware);
+                return (
+                  <IntegrationCard
+                    key={cfg.id}
+                    fhShortName={cfg.fhShortName}
+                    software={sw}
+                    invoiceType={cfg.invoiceType}
+                    vatEntries={cfg.vatEntries}
+                    ossEnabled={cfg.ossEnabled}
+                    autoFinalize={cfg.autoFinalize}
+                    intlTax={cfg.intlTax}
+                    onEdit={() => handleEditIntegration(cfg.id)}
+                    t={t}
+                    lang={lang}
+                  />
+                );
+              })}
             </div>
           </div>
         )}
