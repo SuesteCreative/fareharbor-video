@@ -623,6 +623,20 @@ export default function Dashboard() {
     <div className="min-h-screen dot-bg vignette relative font-dm bg-[#07090e]">
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[700px] h-[280px] bg-blue-600/[0.04] blur-[100px] rounded-full pointer-events-none z-0" />
 
+      {/* ── Demo banner ── */}
+      <div className="relative z-30 flex items-center justify-center gap-2 px-4 py-1.5 bg-amber-500/[0.06] border-b border-amber-500/[0.12]">
+        <svg className="w-3 h-3 text-amber-400/60 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+        </svg>
+        <span className="text-[11px] font-dm text-amber-400/60">
+          Demo — Internal use only. Integration visuals and parameters may vary.
+        </span>
+        <span className="mx-2 text-white/10">·</span>
+        <a href="/how-it-works" className="text-[11px] font-dm text-white/30 hover:text-white/55 transition-colors underline underline-offset-2">
+          How the integration works →
+        </a>
+      </div>
+
       {/* ── Header ── */}
       <header className="relative z-20 flex items-center justify-between px-8 py-4 border-b border-white/[0.06]">
         {/* Brand: icon left + Kapta / Integration Hub stacked right */}
