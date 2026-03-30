@@ -256,14 +256,14 @@ export default function HowItWorks() {
 
           {/* Pipeline diagram */}
           <div className="mb-16 fade-up" style={{ animationDelay: "60ms" }}>
-            <div className="relative rounded-2xl border border-white/[0.07] bg-white/[0.02] p-8 overflow-hidden">
+            <div className="relative rounded-2xl border border-white/[0.07] bg-white/[0.02] p-8">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-600/[0.03] via-violet-600/[0.03] to-emerald-600/[0.03] pointer-events-none" />
 
               <p className="text-[11px] font-dm font-medium text-white/40 uppercase tracking-widest text-center mb-10">
                 {t.pipelineTitle}
               </p>
 
-              <div className="flex items-center justify-center gap-0 overflow-x-auto pb-2 px-4">
+              <div className="flex items-center justify-center flex-wrap gap-y-4 px-4">
                 {/* FareHarbor node */}
                 <div className="flex flex-col items-center gap-3 px-6 py-5 rounded-2xl border border-[#0069b5]/35 bg-[#0069b5]/10 min-w-[148px]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
