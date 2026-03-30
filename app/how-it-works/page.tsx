@@ -66,7 +66,7 @@ function PipelineNode({ label, sublabel, colorBg, colorBorder, colorText, icon }
   icon: React.ReactNode;
 }) {
   return (
-    <div className={`flex flex-col items-center gap-3 px-6 py-5 rounded-2xl border ${colorBorder} ${colorBg} min-w-[148px]`}>
+    <div className={`flex flex-col items-center gap-3 px-5 py-4 rounded-2xl border ${colorBorder} ${colorBg} min-w-[128px]`}>
       <div className={colorText}>{icon}</div>
       <div className="text-center">
         <p className="text-white text-[14px] font-syne font-600 tracking-tight">{label}</p>
@@ -80,14 +80,14 @@ function PipelineNode({ label, sublabel, colorBg, colorBorder, colorText, icon }
 
 function FlowArrow({ label }: { label: string }) {
   return (
-    <div className="flex flex-col items-center gap-2 shrink-0 mx-2">
+    <div className="flex flex-col items-center gap-2 shrink-0 mx-1">
       <span className="text-[11px] font-dm text-white/55 whitespace-nowrap tracking-wide">{label}</span>
-      <svg width="88" height="14" viewBox="0 0 88 14">
-        <line x1="0" y1="7" x2="76" y2="7"
+      <svg width="72" height="14" viewBox="0 0 72 14">
+        <line x1="0" y1="7" x2="60" y2="7"
           stroke="rgba(255,255,255,0.30)" strokeWidth="1.5" strokeDasharray="5 4"
           className="flow-line"
         />
-        <path d="M74 3 L84 7 L74 11" fill="none" stroke="rgba(255,255,255,0.40)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M58 3 L68 7 L58 11" fill="none" stroke="rgba(255,255,255,0.40)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
       </svg>
     </div>
   );
@@ -263,9 +263,9 @@ export default function HowItWorks() {
                 {t.pipelineTitle}
               </p>
 
-              <div className="flex items-center justify-center flex-wrap gap-y-4 px-4">
+              <div className="flex items-center justify-center flex-nowrap px-2">
                 {/* FareHarbor node */}
-                <div className="flex flex-col items-center gap-3 px-6 py-5 rounded-2xl border border-[#0069b5]/35 bg-[#0069b5]/10 min-w-[148px]">
+                <div className="flex flex-col items-center gap-3 px-5 py-4 rounded-2xl border border-[#0069b5]/35 bg-[#0069b5]/10 min-w-[128px]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src="/fareharbor-logo.svg" alt="FareHarbor" className="w-7 h-7 object-contain"
                     style={{ filter: "invert(35%) sepia(90%) saturate(600%) hue-rotate(190deg) brightness(110%)" }}
