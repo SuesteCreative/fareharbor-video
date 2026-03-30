@@ -116,11 +116,11 @@ function PipelineNode({
   icon: React.ReactNode;
 }) {
   return (
-    <div className={`flex flex-col items-center gap-2.5 px-5 py-4 rounded-2xl border ${colorBorder} ${colorBg} min-w-[130px]`}>
+    <div className={`flex flex-col items-center gap-3 px-6 py-5 rounded-2xl border ${colorBorder} ${colorBg} min-w-[148px]`}>
       <div className={`${colorText}`}>{icon}</div>
       <div className="text-center">
-        <p className="text-white/85 text-[13px] font-syne font-600 tracking-tight">{label}</p>
-        <p className={`text-[11px] font-dm mt-0.5 ${colorText} opacity-70`}>{sublabel}</p>
+        <p className="text-white text-[14px] font-syne font-600 tracking-tight">{label}</p>
+        <p className={`text-[12px] font-dm mt-1 ${colorText}`}>{sublabel}</p>
       </div>
     </div>
   );
@@ -130,20 +130,18 @@ function PipelineNode({
 
 function FlowArrow({ label }: { label: string }) {
   return (
-    <div className="flex flex-col items-center gap-1 shrink-0">
-      <span className="text-[10px] font-dm text-white/25 mb-1 whitespace-nowrap">{label}</span>
-      <div className="flex items-center gap-0">
-        <svg width="64" height="12" viewBox="0 0 64 12">
-          <line
-            x1="0" y1="6" x2="56" y2="6"
-            stroke="rgba(255,255,255,0.15)"
-            strokeWidth="1.5"
-            strokeDasharray="5 4"
-            className="flow-line"
-          />
-          <path d="M54 2 L62 6 L54 10" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </div>
+    <div className="flex flex-col items-center gap-2 shrink-0 mx-2">
+      <span className="text-[11px] font-dm text-white/55 whitespace-nowrap tracking-wide">{label}</span>
+      <svg width="88" height="14" viewBox="0 0 88 14">
+        <line
+          x1="0" y1="7" x2="76" y2="7"
+          stroke="rgba(255,255,255,0.30)"
+          strokeWidth="1.5"
+          strokeDasharray="5 4"
+          className="flow-line"
+        />
+        <path d="M74 3 L84 7 L74 11" fill="none" stroke="rgba(255,255,255,0.40)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
     </div>
   );
 }
@@ -235,20 +233,20 @@ export default function HowItWorks() {
               <div className="absolute inset-0 bg-gradient-to-r from-blue-600/[0.03] via-violet-600/[0.03] to-emerald-600/[0.03] pointer-events-none" />
 
               {/* Title */}
-              <p className="text-[11px] font-dm font-medium text-white/25 uppercase tracking-widest text-center mb-8">Integration Pipeline</p>
+              <p className="text-[11px] font-dm font-medium text-white/40 uppercase tracking-widest text-center mb-10">Integration Pipeline</p>
 
               {/* Nodes + arrows */}
-              <div className="flex items-center justify-center gap-0 overflow-x-auto pb-2">
+              <div className="flex items-center justify-center gap-0 overflow-x-auto pb-2 px-4">
                 {/* FareHarbor */}
-                <div className="flex flex-col items-center gap-2.5 px-5 py-4 rounded-2xl border border-[#0069b5]/30 bg-[#0069b5]/10 min-w-[130px]">
+                <div className="flex flex-col items-center gap-3 px-6 py-5 rounded-2xl border border-[#0069b5]/35 bg-[#0069b5]/10 min-w-[148px]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src="/fareharbor-logo.svg" alt="FareHarbor"
                     className="w-7 h-7 object-contain"
                     style={{ filter: "invert(35%) sepia(90%) saturate(600%) hue-rotate(190deg) brightness(110%)" }}
                   />
                   <div className="text-center">
-                    <p className="text-white/85 text-[13px] font-syne font-600 tracking-tight">FareHarbor</p>
-                    <p className="text-[11px] font-dm mt-0.5 text-[#4da8e0]/70">Booking Platform</p>
+                    <p className="text-white text-[14px] font-syne font-600 tracking-tight">FareHarbor</p>
+                    <p className="text-[12px] font-dm mt-1 text-[#4da8e0]">Booking Platform</p>
                   </div>
                 </div>
 
