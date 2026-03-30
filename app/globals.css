@@ -1,3 +1,88 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --bg: #07090e;
+  --surface: #0c0f1c;
+  --card: rgba(255, 255, 255, 0.028);
+  --border: rgba(255, 255, 255, 0.07);
+  --border-hover: rgba(255, 255, 255, 0.14);
+  --accent: #3b82f6;
+  --accent-glow: rgba(59, 130, 246, 0.15);
+  --success: #10b981;
+  --success-glow: rgba(16, 185, 129, 0.15);
+  --text: #f1f5f9;
+  --muted: rgba(255, 255, 255, 0.42);
+  --subtle: rgba(255, 255, 255, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Dot grid background */
+.dot-bg {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* Radial vignette overlay */
+.vignette::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(59,130,246,0.05) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Card glow on valid */
+.card-valid {
+  border-color: rgba(16, 185, 129, 0.35) !important;
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.1), 0 8px 32px rgba(16, 185, 129, 0.06);
+}
+
+/* Input */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Smooth transitions */
+.fade-up {
+  animation: fadeUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Software card hover */
+.sw-card {
+  transition: all 0.18s ease;
+}
+.sw-card:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.045);
+}
+.sw-card.selected {
+  border-color: rgba(59, 130, 246, 0.5);
+  background: rgba(59, 130, 246, 0.08);
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.15);
+}

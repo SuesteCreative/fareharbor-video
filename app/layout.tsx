@@ -1,22 +1,28 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Syne, DM_Sans } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const syne = Syne({
+  subsets: ["latin"],
+  variable: "--font-syne",
+  weight: ["400", "500", "600", "700", "800"],
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-dm",
+  weight: ["300", "400", "500", "600"],
+});
 
 export const metadata: Metadata = {
   title: "FareHarbor Integration Dashboard",
   description: "Automatic billing integration for FareHarbor",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt">
-      <body className={inter.className}>{children}</body>
+      <body className={`${syne.variable} ${dmSans.variable}`}>{children}</body>
     </html>
   );
 }
