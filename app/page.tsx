@@ -624,7 +624,7 @@ export default function Dashboard() {
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[700px] h-[280px] bg-blue-600/[0.04] blur-[100px] rounded-full pointer-events-none z-0" />
 
       {/* ── Header ── */}
-      <header className="relative z-10 flex items-center justify-between px-8 py-4 border-b border-white/[0.06]">
+      <header className="relative z-20 flex items-center justify-between px-8 py-4 border-b border-white/[0.06]">
         {/* Brand: icon left + Kapta / Integration Hub stacked right */}
         <div className="flex items-center gap-2.5">
           <div className="w-[30px] h-[30px] rounded-md bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-sm shadow-blue-600/30 shrink-0">
