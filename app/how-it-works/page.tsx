@@ -1,62 +1,14 @@
 "use client";
 
-// ─── Step data ────────────────────────────────────────────────────────────────
+import { useState, useRef, useEffect } from "react";
+import { translations, type Lang } from "../translations";
 
-const STEPS = [
-  {
-    n: "01",
-    phase: "blue" as const,
-    title: "Booking Completed",
-    actor: "FareHarbor",
-    description:
-      "A customer completes a booking and payment on your FareHarbor listing. The transaction is confirmed and stored in FareHarbor's system.",
-  },
-  {
-    n: "02",
-    phase: "blue" as const,
-    title: "Webhook Triggered",
-    actor: "FareHarbor → Kapta",
-    description:
-      "FareHarbor immediately fires a webhook to Kapta containing all booking details — customer info, amount, currency, country, and timestamp.",
-  },
-  {
-    n: "03",
-    phase: "violet" as const,
-    title: "Tax Rules Applied",
-    actor: "Kapta Engine",
-    description:
-      "Kapta identifies the customer's country, applies the configured VAT rates, OSS logic, exemption reasons, and selects the correct document type.",
-  },
-  {
-    n: "04",
-    phase: "violet" as const,
-    title: "Invoice Requested",
-    actor: "Kapta → Billing API",
-    description:
-      "Kapta constructs a complete invoice payload and calls your billing software's API — InvoiceXpress, Moloni, Billin, or Holded.",
-  },
-  {
-    n: "05",
-    phase: "emerald" as const,
-    title: "Document Certified",
-    actor: "Billing Software",
-    description:
-      "The billing software generates a legally valid, signed fiscal document and registers it with the relevant tax authority (AT, AEAT).",
-  },
-  {
-    n: "06",
-    phase: "emerald" as const,
-    title: "Sent to Customer",
-    actor: "Automatic Delivery",
-    description:
-      "The certified invoice is automatically emailed to the customer and linked to the original FareHarbor booking. Zero manual effort.",
-  },
-];
+// ─── Phase colors ─────────────────────────────────────────────────────────────
 
 const PHASE_COLORS = {
-  blue:   { bg: "bg-blue-500/10",   border: "border-blue-500/25",   text: "text-blue-400",   dot: "bg-blue-500",   glow: "shadow-[0_0_8px_rgba(59,130,246,0.6)]"   },
-  violet: { bg: "bg-violet-500/10", border: "border-violet-500/25", text: "text-violet-400", dot: "bg-violet-500", glow: "shadow-[0_0_8px_rgba(139,92,246,0.6)]"   },
-  emerald:{ bg: "bg-emerald-500/10",border: "border-emerald-500/25",text: "text-emerald-400",dot: "bg-emerald-500",glow: "shadow-[0_0_8px_rgba(16,185,129,0.6)]"   },
+  blue:   { bg: "bg-blue-500/10",    border: "border-blue-500/25",    text: "text-blue-400"    },
+  violet: { bg: "bg-violet-500/10",  border: "border-violet-500/25",  text: "text-violet-400"  },
+  emerald:{ bg: "bg-emerald-500/10", border: "border-emerald-500/25", text: "text-emerald-400" },
 };
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
@@ -108,16 +60,14 @@ const STEP_ICONS = [IconTicket, IconZap, IconGear, IconCode, IconStamp, IconMail
 
 // ─── Pipeline node ────────────────────────────────────────────────────────────
 
-function PipelineNode({
-  label, sublabel, colorBg, colorBorder, colorText, icon,
-}: {
+function PipelineNode({ label, sublabel, colorBg, colorBorder, colorText, icon }: {
   label: string; sublabel: string;
   colorBg: string; colorBorder: string; colorText: string;
   icon: React.ReactNode;
 }) {
   return (
     <div className={`flex flex-col items-center gap-3 px-6 py-5 rounded-2xl border ${colorBorder} ${colorBg} min-w-[148px]`}>
-      <div className={`${colorText}`}>{icon}</div>
+      <div className={colorText}>{icon}</div>
       <div className="text-center">
         <p className="text-white text-[14px] font-syne font-600 tracking-tight">{label}</p>
         <p className={`text-[12px] font-dm mt-1 ${colorText}`}>{sublabel}</p>
@@ -126,18 +76,15 @@ function PipelineNode({
   );
 }
 
-// ─── Animated connector ───────────────────────────────────────────────────────
+// ─── Animated flow arrow ──────────────────────────────────────────────────────
 
 function FlowArrow({ label }: { label: string }) {
   return (
     <div className="flex flex-col items-center gap-2 shrink-0 mx-2">
       <span className="text-[11px] font-dm text-white/55 whitespace-nowrap tracking-wide">{label}</span>
       <svg width="88" height="14" viewBox="0 0 88 14">
-        <line
-          x1="0" y1="7" x2="76" y2="7"
-          stroke="rgba(255,255,255,0.30)"
-          strokeWidth="1.5"
-          strokeDasharray="5 4"
+        <line x1="0" y1="7" x2="76" y2="7"
+          stroke="rgba(255,255,255,0.30)" strokeWidth="1.5" strokeDasharray="5 4"
           className="flow-line"
         />
         <path d="M74 3 L84 7 L74 11" fill="none" stroke="rgba(255,255,255,0.40)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -146,31 +93,109 @@ function FlowArrow({ label }: { label: string }) {
   );
 }
 
+// ─── Lang selector (mirrors main page) ───────────────────────────────────────
+
+function ChevronDown({ className = "" }: { className?: string }) {
+  return (
+    <svg className={`w-3.5 h-3.5 text-white/30 pointer-events-none ${className}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+    </svg>
+  );
+}
+
+const LANG_LABEL: Record<Lang, string> = { pt: "PT", en: "EN", es: "ES" };
+
+function FlagPT() {
+  return (
+    <svg width="20" height="14" viewBox="0 0 20 14" className="rounded-[1px] shrink-0">
+      <rect width="8" height="14" fill="#006600"/>
+      <rect x="8" width="12" height="14" fill="#D52B1E"/>
+      <circle cx="8" cy="7" r="3" fill="#FFD700" opacity="0.9"/>
+      <circle cx="8" cy="7" r="2.1" fill="#006600"/>
+      <circle cx="8" cy="7" r="1.2" fill="#FFD700" opacity="0.8"/>
+    </svg>
+  );
+}
+function FlagGB() {
+  return (
+    <svg width="20" height="14" viewBox="0 0 60 30" className="rounded-[1px] shrink-0">
+      <rect width="60" height="30" fill="#012169"/>
+      <path d="M0,0 L60,30 M60,0 L0,30" stroke="white" strokeWidth="6"/>
+      <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" strokeWidth="4"/>
+      <path d="M30,0 V30 M0,15 H60" stroke="white" strokeWidth="10"/>
+      <path d="M30,0 V30 M0,15 H60" stroke="#C8102E" strokeWidth="6"/>
+    </svg>
+  );
+}
+function FlagES() {
+  return (
+    <svg width="20" height="14" viewBox="0 0 3 2" className="rounded-[1px] shrink-0">
+      <rect width="3" height="2" fill="#c60b1e"/>
+      <rect y="0.5" width="3" height="1" fill="#ffc400"/>
+    </svg>
+  );
+}
+const LANG_FLAG: Record<Lang, React.ReactNode> = { pt: <FlagPT />, en: <FlagGB />, es: <FlagES /> };
+
+function LangSelector({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative z-[60]">
+      <button type="button" onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08] hover:border-white/[0.16] transition-all text-sm text-white/60 hover:text-white font-dm">
+        {LANG_FLAG[lang]}
+        <span className="font-medium tracking-wide">{LANG_LABEL[lang]}</span>
+        <ChevronDown className={`transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="absolute right-0 mt-1.5 w-28 bg-[#0e1220] border border-white/[0.1] rounded-xl shadow-2xl overflow-hidden">
+          {(["pt", "en", "es"] as Lang[]).map(l => (
+            <button key={l} type="button"
+              onMouseDown={(e) => { e.preventDefault(); onChange(l); setOpen(false); }}
+              className={`flex items-center gap-2.5 w-full px-3.5 py-2.5 text-sm font-dm transition-colors ${lang === l ? "bg-blue-600/15 text-white" : "text-white/50 hover:bg-white/[0.04] hover:text-white"}`}>
+              {LANG_FLAG[l]}
+              <span className="font-medium">{LANG_LABEL[l]}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function HowItWorks() {
+  const [lang, setLang] = useState<Lang>("en");
+  const t = translations[lang];
+
+  const STEPS = [
+    { phase: "blue"    as const, title: t.step01Title, actor: t.step01Actor, desc: t.step01Desc },
+    { phase: "blue"    as const, title: t.step02Title, actor: t.step02Actor, desc: t.step02Desc },
+    { phase: "violet"  as const, title: t.step03Title, actor: t.step03Actor, desc: t.step03Desc },
+    { phase: "violet"  as const, title: t.step04Title, actor: t.step04Actor, desc: t.step04Desc },
+    { phase: "emerald" as const, title: t.step05Title, actor: t.step05Actor, desc: t.step05Desc },
+    { phase: "emerald" as const, title: t.step06Title, actor: t.step06Actor, desc: t.step06Desc },
+  ];
+
   return (
     <>
       <style>{`
-        @keyframes flowAnim {
-          to { stroke-dashoffset: -18; }
-        }
-        .flow-line {
-          animation: flowAnim 1.2s linear infinite;
-        }
-        @keyframes pulseGlow {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 1; }
-        }
-        .pulse-dot {
-          animation: pulseGlow 2s ease-in-out infinite;
-        }
-        .step-card:nth-child(1) { animation-delay: 0ms; }
-        .step-card:nth-child(2) { animation-delay: 80ms; }
-        .step-card:nth-child(3) { animation-delay: 160ms; }
-        .step-card:nth-child(4) { animation-delay: 240ms; }
-        .step-card:nth-child(5) { animation-delay: 320ms; }
-        .step-card:nth-child(6) { animation-delay: 400ms; }
+        @keyframes flowAnim { to { stroke-dashoffset: -18; } }
+        .flow-line { animation: flowAnim 1.2s linear infinite; }
+        @keyframes pulseGlow { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+        .pulse-dot { animation: pulseGlow 2s ease-in-out infinite; }
       `}</style>
 
       <div className="min-h-screen dot-bg vignette relative font-dm bg-[#07090e]">
@@ -203,9 +228,12 @@ export default function HowItWorks() {
             </div>
           </div>
 
-          <a href="/" className="text-sm font-dm text-white/30 hover:text-white/60 transition-colors">
-            ← Back to Dashboard
-          </a>
+          <div className="flex items-center gap-4">
+            <a href="/" className="text-sm font-dm text-white/30 hover:text-white/60 transition-colors">
+              {t.backToDashboard}
+            </a>
+            <LangSelector lang={lang} onChange={setLang} />
+          </div>
         </header>
 
         <main className="relative z-10 px-6 py-16 max-w-5xl mx-auto">
@@ -216,87 +244,70 @@ export default function HowItWorks() {
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
               </svg>
-              How it works
+              {t.howItWorksBadge}
             </div>
-            <h1 className="font-syne font-700 text-4xl text-white mb-4 tracking-tight leading-tight">
-              From Booking to Invoice,<br/>Fully Automated
+            <h1 className="font-syne font-700 text-4xl text-white mb-4 tracking-tight leading-tight whitespace-pre-line">
+              {t.howItWorksTitle}
             </h1>
             <p className="text-white/40 text-[15px] leading-relaxed font-dm max-w-md mx-auto">
-              Every FareHarbor booking triggers a real-time fiscal document pipeline. No manual steps. No errors.
+              {t.howItWorksSubtitle}
             </p>
           </div>
 
           {/* Pipeline diagram */}
           <div className="mb-16 fade-up" style={{ animationDelay: "60ms" }}>
             <div className="relative rounded-2xl border border-white/[0.07] bg-white/[0.02] p-8 overflow-hidden">
-              {/* Background glow */}
               <div className="absolute inset-0 bg-gradient-to-r from-blue-600/[0.03] via-violet-600/[0.03] to-emerald-600/[0.03] pointer-events-none" />
 
-              {/* Title */}
-              <p className="text-[11px] font-dm font-medium text-white/40 uppercase tracking-widest text-center mb-10">Integration Pipeline</p>
+              <p className="text-[11px] font-dm font-medium text-white/40 uppercase tracking-widest text-center mb-10">
+                {t.pipelineTitle}
+              </p>
 
-              {/* Nodes + arrows */}
               <div className="flex items-center justify-center gap-0 overflow-x-auto pb-2 px-4">
-                {/* FareHarbor */}
+                {/* FareHarbor node */}
                 <div className="flex flex-col items-center gap-3 px-6 py-5 rounded-2xl border border-[#0069b5]/35 bg-[#0069b5]/10 min-w-[148px]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/fareharbor-logo.svg" alt="FareHarbor"
-                    className="w-7 h-7 object-contain"
+                  <img src="/fareharbor-logo.svg" alt="FareHarbor" className="w-7 h-7 object-contain"
                     style={{ filter: "invert(35%) sepia(90%) saturate(600%) hue-rotate(190deg) brightness(110%)" }}
                   />
                   <div className="text-center">
                     <p className="text-white text-[14px] font-syne font-600 tracking-tight">FareHarbor</p>
-                    <p className="text-[12px] font-dm mt-1 text-[#4da8e0]">Booking Platform</p>
+                    <p className="text-[12px] font-dm mt-1 text-[#4da8e0]">{t.nodeBookingPlatform}</p>
                   </div>
                 </div>
 
-                <FlowArrow label="booking data" />
+                <FlowArrow label={t.arrowBookingData} />
 
-                <PipelineNode
-                  label="Kapta" sublabel="Integration Engine"
+                <PipelineNode label="Kapta" sublabel={t.nodeIntegrationEngine}
                   colorBg="bg-blue-500/10" colorBorder="border-blue-500/25" colorText="text-blue-400"
-                  icon={
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                    </svg>
-                  }
+                  icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>}
                 />
 
-                <FlowArrow label="invoice request" />
+                <FlowArrow label={t.arrowInvoiceRequest} />
 
-                <PipelineNode
-                  label="Billing Software" sublabel="InvoiceXpress / Moloni"
+                <PipelineNode label={t.invoicingSoftware} sublabel={t.nodeBillingApps}
                   colorBg="bg-violet-500/10" colorBorder="border-violet-500/25" colorText="text-violet-400"
-                  icon={
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                  }
+                  icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>}
                 />
 
-                <FlowArrow label="fiscal document" />
+                <FlowArrow label={t.arrowFiscalDoc} />
 
-                <PipelineNode
-                  label="Customer" sublabel="Auto delivery"
+                <PipelineNode label={t.nodeCustomer} sublabel={t.nodeAutoDelivery}
                   colorBg="bg-emerald-500/10" colorBorder="border-emerald-500/25" colorText="text-emerald-400"
-                  icon={
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                    </svg>
-                  }
+                  icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>}
                 />
               </div>
 
               {/* Phase legend */}
               <div className="flex items-center justify-center gap-6 mt-8">
                 {[
-                  { color: "bg-blue-500", label: "FareHarbor" },
-                  { color: "bg-violet-500", label: "Kapta Engine" },
-                  { color: "bg-emerald-500", label: "Billing & Delivery" },
+                  { color: "bg-[#0069b5]", label: t.legendFH },
+                  { color: "bg-blue-500",   label: t.legendKapta },
+                  { color: "bg-violet-500", label: t.legendBilling },
                 ].map(({ color, label }) => (
                   <div key={label} className="flex items-center gap-2">
                     <div className={`w-1.5 h-1.5 rounded-full pulse-dot ${color}`} />
-                    <span className="text-[11px] font-dm text-white/30">{label}</span>
+                    <span className="text-[11px] font-dm text-white/35">{label}</span>
                   </div>
                 ))}
               </div>
@@ -304,17 +315,18 @@ export default function HowItWorks() {
           </div>
 
           {/* Steps grid */}
-          <div className="mb-6">
-            <p className="text-[11px] font-dm font-medium text-white/25 uppercase tracking-widest text-center mb-8">Step by Step</p>
+          <div className="mb-10">
+            <p className="text-[11px] font-dm font-medium text-white/25 uppercase tracking-widest text-center mb-8">
+              {t.stepByStep}
+            </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {STEPS.map((step, i) => {
                 const Icon = STEP_ICONS[i];
                 const c = PHASE_COLORS[step.phase];
+                const n = String(i + 1).padStart(2, "0");
                 return (
-                  <div key={step.n}
-                    className={`step-card fade-up rounded-2xl border ${c.border} bg-white/[0.025] p-5 relative overflow-hidden`}
-                    style={{ animationDelay: `${i * 60 + 120}ms` }}
-                  >
+                  <div key={i} className={`fade-up rounded-2xl border ${c.border} bg-white/[0.025] p-5 relative overflow-hidden`}
+                    style={{ animationDelay: `${i * 60 + 120}ms` }}>
                     <div className={`absolute top-0 right-0 w-32 h-32 blur-3xl rounded-full pointer-events-none ${c.bg}`} />
                     <div className="flex items-start gap-4">
                       <div className={`w-9 h-9 rounded-xl border shrink-0 flex items-center justify-center ${c.bg} ${c.border} ${c.text}`}>
@@ -322,11 +334,11 @@ export default function HowItWorks() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className={`text-[10px] font-dm font-medium tracking-widest ${c.text} opacity-70`}>{step.n}</span>
-                          <span className="text-[10px] font-dm text-white/20 uppercase tracking-wider">{step.actor}</span>
+                          <span className={`text-[10px] font-dm font-medium tracking-widest ${c.text} opacity-70`}>{n}</span>
+                          <span className="text-[10px] font-dm text-white/25 uppercase tracking-wider truncate">{step.actor}</span>
                         </div>
                         <h3 className="font-syne font-600 text-white text-[14px] tracking-tight mb-2">{step.title}</h3>
-                        <p className="text-[12px] font-dm text-white/40 leading-relaxed">{step.description}</p>
+                        <p className="text-[12px] font-dm text-white/40 leading-relaxed">{step.desc}</p>
                       </div>
                     </div>
                   </div>
@@ -338,14 +350,16 @@ export default function HowItWorks() {
           {/* Key facts */}
           <div className="fade-up" style={{ animationDelay: "480ms" }}>
             <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-8">
-              <p className="text-[11px] font-dm font-medium text-white/25 uppercase tracking-widest text-center mb-6">Key Facts</p>
+              <p className="text-[11px] font-dm font-medium text-white/25 uppercase tracking-widest text-center mb-6">
+                {t.keyFacts}
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
                 {[
-                  { value: "< 2s", label: "Booking to invoice request", color: "text-blue-400" },
-                  { value: "100%", label: "Automated — no manual steps", color: "text-violet-400" },
-                  { value: "EU", label: "Compliant in Portugal, Spain + more", color: "text-emerald-400" },
+                  { value: "< 2s",  label: t.fact1Label, color: "text-blue-400"    },
+                  { value: "100%",  label: t.fact2Label, color: "text-violet-400"  },
+                  { value: "EU",    label: t.fact3Label, color: "text-emerald-400" },
                 ].map(({ value, label, color }) => (
-                  <div key={label}>
+                  <div key={value}>
                     <p className={`font-syne font-700 text-3xl tracking-tight mb-1 ${color}`}>{value}</p>
                     <p className="text-[12px] font-dm text-white/35">{label}</p>
                   </div>
