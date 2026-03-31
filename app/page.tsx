@@ -26,6 +26,7 @@ type IntegrationConfig = {
   exemptReason: string;
   ossEnabled: boolean;
   autoFinalize: string;
+  billingSeries: string;
 };
 
 const BILLING_SOFTWARE: Record<Country, { id: SoftwareId; name: string; logo: string }[]> = {
@@ -545,9 +546,10 @@ export default function Dashboard() {
   const [invoiceType,  setInvoiceType]  = useState("");
   const [vatEntries,   setVatEntries]   = useState<VatEntry[]>([]);
   const [intlTax,      setIntlTax]      = useState(false);
-  const [exemptReason, setExemptReason] = useState("");
-  const [ossEnabled,   setOssEnabled]   = useState(false);
-  const [autoFinalize, setAutoFinalize] = useState("");
+  const [exemptReason,  setExemptReason]  = useState("");
+  const [ossEnabled,    setOssEnabled]    = useState(false);
+  const [autoFinalize,  setAutoFinalize]  = useState("");
+  const [billingSeries, setBillingSeries] = useState("");
 
   const selectCountry = (c: Country) => {
     setBillCountry(c); setBillSoftware("");
@@ -565,7 +567,7 @@ export default function Dashboard() {
       id: editingId ?? Date.now().toString(),
       fhShortName, fhApiKey, billCountry: billCountry as Country,
       billSoftware: billSoftware as SoftwareId, billCompany, billApiKey,
-      invoiceType, vatEntries, intlTax, exemptReason, ossEnabled, autoFinalize,
+      invoiceType, vatEntries, intlTax, exemptReason, ossEnabled, autoFinalize, billingSeries,
     };
     setIntegrations(prev =>
       editingId ? prev.map(i => i.id === cfg.id ? cfg : i) : [...prev, cfg]
@@ -586,6 +588,7 @@ export default function Dashboard() {
     setInvoiceType(cfg.invoiceType); setVatEntries(cfg.vatEntries);
     setIntlTax(cfg.intlTax);         setExemptReason(cfg.exemptReason);
     setOssEnabled(cfg.ossEnabled);   setAutoFinalize(cfg.autoFinalize);
+    setBillingSeries(cfg.billingSeries);
     setEditingId(id);
     setIsEditing(true);
     setStep("configure");
@@ -596,7 +599,7 @@ export default function Dashboard() {
     setBillCountry(""); setBillSoftware(""); setBillCompany(""); setBillApiKey("");
     billCompanyV.reset(); billApiKeyV.reset();
     setInvoiceType(""); setVatEntries([]); setIntlTax(false);
-    setExemptReason(""); setOssEnabled(false); setAutoFinalize("");
+    setExemptReason(""); setOssEnabled(false); setAutoFinalize(""); setBillingSeries("");
     setEditingId(null); setIsEditing(false);
     setStep("configure");
   };
@@ -610,7 +613,7 @@ export default function Dashboard() {
     setBillCountry(""); setBillSoftware(""); setBillCompany(""); setBillApiKey("");
     billCompanyV.reset(); billApiKeyV.reset();
     setInvoiceType(""); setVatEntries([]); setIntlTax(false);
-    setExemptReason(""); setOssEnabled(false); setAutoFinalize("");
+    setExemptReason(""); setOssEnabled(false); setAutoFinalize(""); setBillingSeries("");
   };
 
   const softwareOptions  = billCountry ? BILLING_SOFTWARE[billCountry] : [];
@@ -806,6 +809,18 @@ export default function Dashboard() {
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"><ChevronDown /></span>
                     </div>
                   </div>
+                </div>
+
+                {/* Row 2: billing series */}
+                <div className="mb-4">
+                  <label className="block text-[11px] font-dm font-medium text-white/40 mb-1.5 uppercase tracking-wider">{t.billingSeries}</label>
+                  <input
+                    type="text"
+                    value={billingSeries}
+                    onChange={(e) => setBillingSeries(e.target.value)}
+                    placeholder={t.billingSeriesPlaceholder}
+                    className="w-full h-[42px] rounded-xl border border-white/[0.09] bg-white/[0.03] px-4 text-sm font-dm text-white placeholder:text-white/20 focus:outline-none focus:border-white/20 focus:bg-white/[0.05] transition-all"
+                  />
                 </div>
 
                 {/* VAT countries list */}
